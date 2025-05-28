@@ -1,4 +1,4 @@
-import Provider from "./provider";
+// import Provider from "./provider";
 import "./globals.css";
 
 export default function RootLayout({
@@ -6,5 +6,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <Provider>{children}</Provider>;
+  return (
+    <html>
+      <body>{children}</body>
+    </html>
+  );
 }

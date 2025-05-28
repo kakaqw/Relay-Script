@@ -5,38 +5,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { getPrivate } from "./components/getPrivate";
 import { privateKeyToAccount } from "viem/accounts";
 import { createWalletClient, http } from "viem";
-import { sepolia } from "viem/chains";
+import { sepolia, arbitrumSepolia } from "viem/chains";
+import { relayClient } from "./components/relay-client";
+
+export let accounts: any[] = [];
+export let clients: any[] = [];
 
 export default function Home() {
   const [Text, setText] = useState("");
-  const accounts: any[] = [];
-  const clients: any[] = [];
 
   useEffect(() => {}, [Text]);
 
   //获取从页面输入的私钥
-  const inputPirvate = () => {
+  const inputPirvate = async () => {
+    // 清空账户
+    accounts = [];
+    clients = [];
+
+    //获取私钥
     const privateKeys = getPrivate(Text);
     privateKeys.forEach((privatekeys, index) => {
-      console.log("第" + (index + 1) + "个私钥", privatekeys);
+      // console.log("第" + (index + 1) + "个私钥", privatekeys);
       const account = privateKeyToAccount(privateKeys[index] as `0x${string}`);
-      console.log("第一个账户", account);
+      // console.log("第一个账户", account);
       accounts.push(account);
     });
     console.log("所有账户", accounts);
   };
 
-  //获取客户端
-  const getClinet = () => {
-    accounts.forEach((account) => {
-      const client = createWalletClient({
-        account: account,
-        chain: sepolia,
-        transport: http(),
-      });
-      clients.push(client);
-    });
-    console.log("所有客户端", clients);
+  //获取报价
+  const getQuote = async () => {
+    try {
+      console.log("getClient", relayClient());
+
+      const quote = await relayClient()?.actions.getQuote(
+        {
+          user: accounts[0].address,
+          // wallet: accounts[0],
+          chainId: sepolia.id, // The chain id to bridge from
+          toChainId: arbitrumSepolia.id, // The chain id to bridge to
+          amount: "100000000000000000", // Amount in wei to bridge
+          currency: "0x0000000000000000000000000000000000000000", // ERC20 Address
+          toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
+          tradeType: "EXACT_INPUT",
+        },
+        true
+      );
+      console.log("quote", quote);
+    } catch (error) {
+      console.error("error", error);
+    }
   };
 
   return (
@@ -68,11 +86,19 @@ export default function Home() {
           <button
             onClick={() => {
               inputPirvate();
-              getClinet();
+              // getClinet();
             }}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             开始垮链
+          </button>
+          <button
+            onClick={() => {
+              getQuote();
+            }}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            获取报价
           </button>
         </div>
       </div>
