@@ -15,27 +15,23 @@ import { Quote } from "./components/interface";
 import { executeTx } from "./components/ececuteTx";
 
 export let accounts: Account[] = [];
-export let clients: any[] = [];
+// export let clients: any[] = [];
 
 export default function Home() {
   const [Text, setText] = useState("");
 
+  // 监听输入框
   useEffect(() => {}, [Text]);
-
-  //获取从页面输入的私钥
-  const inputPirvate = async () => {};
 
   //获取报价
   const getQuote = async () => {
     try {
       // 清空账户
       accounts = [];
-      clients = [];
 
       //获取私钥
       const privateKeys = getPrivate(Text);
       privateKeys.forEach((privateKey) => {
-        // console.log("第" + (index + 1) + "个私钥", privatekeys);
         const account = privateKeyToAccount(privateKey as `0x${string}`);
 
         accounts.push(account);
