@@ -13,6 +13,7 @@ import {
 import { type Account } from "viem/accounts";
 import { Quote } from "./components/interface";
 import { executeTx } from "./components/ececuteTx";
+import { getEthPrice } from "./getEthPrice";
 
 export let accounts: Account[] = [];
 // export let clients: any[] = [];
@@ -22,6 +23,12 @@ export default function Home() {
 
   // 监听输入框
   useEffect(() => {}, [Text]);
+
+  // 获取ETH价格
+  const getPrice = async () => {
+    const price = await getEthPrice();
+    console.log("price", price);
+  };
 
   //获取报价
   const getQuote = async () => {
@@ -55,7 +62,8 @@ export default function Home() {
         tradeType: "EXACT_INPUT",
       };
 
-      executeTx(tx);
+      const toChainId = await executeTx(tx);
+      console.log("toChainId", toChainId);
     } catch (error) {
       console.error("error", error);
     }
@@ -87,6 +95,14 @@ export default function Home() {
 
         {/* 操作按钮 */}
         <div className="flex justify-center gap-4 mt-8">
+          <button
+            onClick={() => {
+              getPrice();
+            }}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            获取ETH价格
+          </button>
           <button
             onClick={() => {
               getQuote();

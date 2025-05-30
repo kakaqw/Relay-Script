@@ -25,7 +25,7 @@ export const executeTx = async ({
     },
     true
   );
-  console.log("quote成功获取报价");
+  console.log("quote成功获取报价", a);
 
   //执行交易
   relayClient()?.actions.execute({
@@ -52,4 +52,6 @@ export const executeTx = async ({
       );
     },
   });
+
+  return toChainId;
 };
