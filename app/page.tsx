@@ -4,11 +4,17 @@ import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { getPrivate } from "./components/getPrivate";
 import { privateKeyToAccount } from "viem/accounts";
-import { createWalletClient, http } from "viem";
 import { sepolia, arbitrumSepolia } from "viem/chains";
-import { relayClient } from "./components/relay-client";
+import { relayClient } from "./components/relay-client"; //用于执行relay交易的客户端
+import {
+  createSepoliaClient,
+  createArbSepoliaClient,
+} from "./components/viem-client";
+import { type Account } from "viem/accounts";
+import { Quote } from "./components/interface";
+import { executeTx } from "./components/ececuteTx";
 
-export let accounts: any[] = [];
+export let accounts: Account[] = [];
 export let clients: any[] = [];
 
 export default function Home() {
@@ -17,41 +23,43 @@ export default function Home() {
   useEffect(() => {}, [Text]);
 
   //获取从页面输入的私钥
-  const inputPirvate = async () => {
-    // 清空账户
-    accounts = [];
-    clients = [];
-
-    //获取私钥
-    const privateKeys = getPrivate(Text);
-    privateKeys.forEach((privatekeys, index) => {
-      // console.log("第" + (index + 1) + "个私钥", privatekeys);
-      const account = privateKeyToAccount(privateKeys[index] as `0x${string}`);
-      // console.log("第一个账户", account);
-      accounts.push(account);
-    });
-    console.log("所有账户", accounts);
-  };
+  const inputPirvate = async () => {};
 
   //获取报价
   const getQuote = async () => {
     try {
+      // 清空账户
+      accounts = [];
+      clients = [];
+
+      //获取私钥
+      const privateKeys = getPrivate(Text);
+      privateKeys.forEach((privateKey) => {
+        // console.log("第" + (index + 1) + "个私钥", privatekeys);
+        const account = privateKeyToAccount(privateKey as `0x${string}`);
+
+        accounts.push(account);
+      });
+      console.log("所有账户", accounts);
+
       console.log("getClient", relayClient());
 
-      const quote = await relayClient()?.actions.getQuote(
-        {
-          user: accounts[0].address,
-          // wallet: accounts[0],
-          chainId: sepolia.id, // The chain id to bridge from
-          toChainId: arbitrumSepolia.id, // The chain id to bridge to
-          amount: "100000000000000000", // Amount in wei to bridge
-          currency: "0x0000000000000000000000000000000000000000", // ERC20 Address
-          toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
-          tradeType: "EXACT_INPUT",
-        },
-        true
-      );
-      console.log("quote", quote);
+      //通过accounts[0]创建ArbSepoliaClient
+      const ArbSepoliaClient = createArbSepoliaClient(accounts[0]);
+      const SepoliaClient = createSepoliaClient(accounts[0]);
+
+      const tx: Quote = {
+        user: accounts[0].address,
+        wallet: SepoliaClient,
+        chainId: sepolia.id,
+        toChainId: arbitrumSepolia.id,
+        amount: "5000000000000000",
+        currency: "0x0000000000000000000000000000000000000000", // ERC20 Address
+        toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
+        tradeType: "EXACT_INPUT",
+      };
+
+      executeTx(tx);
     } catch (error) {
       console.error("error", error);
     }
@@ -85,20 +93,11 @@ export default function Home() {
         <div className="flex justify-center gap-4 mt-8">
           <button
             onClick={() => {
-              inputPirvate();
-              // getClinet();
-            }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            开始垮链
-          </button>
-          <button
-            onClick={() => {
               getQuote();
             }}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
-            获取报价
+            全自动亏钱
           </button>
         </div>
       </div>
