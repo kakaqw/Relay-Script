@@ -76,6 +76,5 @@ export const getEthPrice = async () => {
   // 从返回数据中提取价格，并根据小数位数转换为实际价格
   const price = Number(roundData[1]) / 10 ** Number(decimals);
 
-  console.log("ETH链上价格:", price, "USD");
   return price;
 };

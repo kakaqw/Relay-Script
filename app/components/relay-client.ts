@@ -5,7 +5,13 @@ import {
   TESTNET_RELAY_API,
   getClient,
 } from "@reservoir0x/relay-sdk";
-import { mainnet, sepolia, arbitrumSepolia, zora } from "viem/chains";
+import {
+  arbitrumSepolia,
+  sepolia,
+  optimismSepolia,
+  abstractTestnet,
+  zoraSepolia,
+} from "viem/chains";
 
 // 保存客户端实例
 let clientInstance: ReturnType<typeof createClient> | null = null;
@@ -25,8 +31,9 @@ export const relayClient = () => {
       chains: [
         convertViemChainToRelayChain(sepolia),
         convertViemChainToRelayChain(arbitrumSepolia),
-        convertViemChainToRelayChain(mainnet),
-        convertViemChainToRelayChain(zora),
+        convertViemChainToRelayChain(optimismSepolia),
+        convertViemChainToRelayChain(abstractTestnet),
+        convertViemChainToRelayChain(zoraSepolia),
       ],
     });
     console.log("初始化客户端成功", clientInstance);

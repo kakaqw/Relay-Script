@@ -4,22 +4,73 @@ import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { getPrivate } from "./components/getPrivate";
 import { privateKeyToAccount } from "viem/accounts";
-import { sepolia, arbitrumSepolia } from "viem/chains";
-import { relayClient } from "./components/relay-client"; //用于执行relay交易的客户端
+import { formatEther } from "viem";
 import {
-  createSepoliaClient,
-  createArbSepoliaClient,
+  arbitrumSepolia,
+  sepolia,
+  optimismSepolia,
+  abstractTestnet,
+  zoraSepolia,
+} from "viem/chains";
+
+import {
+  ArbSepoliaClient,
+  SepoliaClient,
+  OpeSepoliaClient,
+  AbstractSepoliaClient,
+  ZoraSepoliaClient,
 } from "./components/viem-client";
+import {
+  publicClientSepolia,
+  publicClientArbSepolia,
+  publicClientOpeSepolia,
+  publicClientAbstractSepolia,
+  publicClientZoraSepolia,
+} from "./components/public-client";
+
 import { type Account } from "viem/accounts";
 import { Quote } from "./components/interface";
 import { executeTx } from "./components/ececuteTx";
 import { getEthPrice } from "./getEthPrice";
 
 export let accounts: Account[] = [];
-// export let clients: any[] = [];
+export let clients: any[] = [
+  {
+    publicClient: publicClientSepolia,
+    client: SepoliaClient,
+    id: sepolia.id,
+  },
+  {
+    publicClient: publicClientOpeSepolia,
+    client: OpeSepoliaClient,
+    id: optimismSepolia.id,
+  },
+  {
+    publicClient: publicClientAbstractSepolia,
+    client: AbstractSepoliaClient,
+    id: abstractTestnet.id,
+  },
+  {
+    publicClient: publicClientZoraSepolia,
+    client: ZoraSepoliaClient,
+    id: zoraSepolia.id,
+  },
+  {
+    publicClient: publicClientArbSepolia,
+    client: ArbSepoliaClient,
+    id: arbitrumSepolia.id,
+  },
+  {
+    publicClient: publicClientSepolia,
+    client: SepoliaClient,
+    id: sepolia.id,
+  },
+];
 
 export default function Home() {
   const [Text, setText] = useState("");
+  const [sourceChain, setSourceChain] = useState("11155111");
+  const [targetChain, setTargetChain] = useState("421614");
 
   // 监听输入框
   useEffect(() => {}, [Text]);
@@ -43,27 +94,40 @@ export default function Home() {
 
         accounts.push(account);
       });
-      console.log("所有账户", accounts);
 
-      console.log("getClient", relayClient());
+      let finish: any = [];
+      for (const account of accounts) {
+        for (const [index, { publicClient, client, id }] of clients.entries()) {
+          const balance = await publicClient.getBalance({
+            address: account.address,
+          });
+          console.log("balance", formatEther(balance));
 
-      //通过accounts[0]创建ArbSepoliaClient
-      const ArbSepoliaClient = createArbSepoliaClient(accounts[0]);
-      const SepoliaClient = createSepoliaClient(accounts[0]);
+          if (clients[index + 1] == null) {
+            console.log("没有下一个客户端");
+            continue;
+          }
 
-      const tx: Quote = {
-        user: accounts[0].address,
-        wallet: SepoliaClient,
-        chainId: sepolia.id,
-        toChainId: arbitrumSepolia.id,
-        amount: "5000000000000000",
-        currency: "0x0000000000000000000000000000000000000000", // ERC20 Address
-        toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
-        tradeType: "EXACT_INPUT",
-      };
+          //设置交易参数
+          const tx: Quote = {
+            user: account.address,
+            wallet: client(account),
+            chainId: id,
+            toChainId: clients[index + 1].id,
+            amount: balance.toString(),
+            currency: "0x0000000000000000000000000000000000000000", // ERC20 Address
+            toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
+            tradeType: "EXACT_INPUT",
+          };
+          const toChainId = await executeTx(tx);
 
-      const toChainId = await executeTx(tx);
-      console.log("toChainId", toChainId);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          console.log("toChainId", toChainId);
+        }
+        console.log("完成交互", account.address);
+        finish.push(account.address);
+      }
+      console.log("完成交互", finish);
     } catch (error) {
       console.error("error", error);
     }
@@ -111,6 +175,42 @@ export default function Home() {
           >
             全自动亏钱
           </button>
+        </div>
+        <div className="flex justify-center space-x-4 mt-4">
+          <div className="w-full max-w-xs">
+            <label className="block text-sm font-medium mb-1">启始链</label>
+            <select
+              className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background"
+              value={sourceChain}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setSourceChain(newValue);
+                console.log("sourceChain changed to", newValue);
+              }}
+            >
+              <option value={sepolia.id}>Sepolia</option>
+              <option value={arbitrumSepolia.id}>Arbitrum Sepolia</option>
+              <option value={abstractTestnet.id}>abstractTestnet</option>
+              <option value={zoraSepolia.id}>Zora Sepolia</option>
+            </select>
+          </div>
+          <div className="w-full max-w-xs">
+            <label className="block text-sm font-medium mb-1">终止链</label>
+            <select
+              className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background"
+              value={targetChain}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setTargetChain(newValue);
+                console.log("targetChain changed to", newValue);
+              }}
+            >
+              <option value={sepolia.id}>Sepolia</option>
+              <option value={arbitrumSepolia.id}>Arbitrum Sepolia</option>
+              <option value={abstractTestnet.id}>abstractTestnet</option>
+              <option value={zoraSepolia.id}>Zora Sepolia</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
