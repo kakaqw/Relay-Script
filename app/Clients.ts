@@ -12,14 +12,14 @@ import {
   OpeSepoliaClient,
   AbstractSepoliaClient,
   ZoraSepoliaClient,
-} from "./components/viem-client";
+} from "./tools/viem-client";
 import {
   publicClientSepolia,
   publicClientArbSepolia,
   publicClientOpeSepolia,
   publicClientAbstractSepolia,
   publicClientZoraSepolia,
-} from "./components/public-client";
+} from "./tools/public-client";
 
 const sepoliaClient = {
   publicClient: publicClientSepolia,

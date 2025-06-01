@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { getPrivate } from "./components/getPrivate";
+import { getPrivate } from "./tools/getPrivate";
 import { privateKeyToAccount } from "viem/accounts";
 import { formatEther } from "viem";
 import {
@@ -22,16 +22,28 @@ import {
 } from "./Clients";
 
 import { type Account } from "viem/accounts";
-import { Quote } from "./components/interface";
-import { executeTx } from "./components/ececuteTx";
+import { Quote } from "./tools/interface";
+import { executeTx } from "./tools/ececuteTx";
+import RpcInput from "./components/rpcKeySetting"; // 引入简化的RPC输入组件
+import { setKey } from "./tools/viem-client";
 
 export let accounts: Account[] = [];
 export let clients: any[] = [];
+const allClients = [
+  sepoliaClient,
+  optimismSepoliaClient,
+  abstractTestnetClient,
+  zoraSepoliaClient,
+  arbSepoliaClient,
+];
 
 export default function Home() {
   const [Text, setText] = useState("");
   const [sourceChain, setSourceChain] = useState(sepoliaClient);
   const [targetChain, setTargetChain] = useState(arbSepoliaClient);
+  const [rpcKey, setRpcKey] = useState(""); // 保存RPC API Key
+  const [showMainUI, setShowMainUI] = useState(false); // 控制是否显示主界面
+
   let path: any[];
 
   // 监听输入框
@@ -189,7 +201,7 @@ export default function Home() {
     try {
       // 清空账户
       accounts = [];
-
+      setKey(rpcKey);
       //获取私钥
       const privateKeys = getPrivate(Text);
       privateKeys.forEach((privateKey) => {
@@ -236,6 +248,21 @@ export default function Home() {
       console.error("error", error);
     }
   };
+
+  // 处理RPC Key提交
+  const handleRpcSubmit = (apiKey: string) => {
+    setRpcKey(apiKey);
+    setShowMainUI(true); // 提交后显示主界面
+    console.log("已设置RPC API Key:", apiKey);
+
+    // 这里可以添加使用API Key更新客户端的逻辑
+    // 例如: updateClientsWithApiKey(apiKey);
+  };
+
+  // 如果没有设置RPC Key，显示RPC输入组件
+  if (!showMainUI) {
+    return <RpcInput onRpcSubmit={handleRpcSubmit} />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-6 w-100vw ">
@@ -288,12 +315,14 @@ export default function Home() {
               value={sourceChain.id}
               onChange={(e) => {
                 const newValue = e.target.value;
-                clients.forEach((client) => {
-                  if (client.id === Number(newValue)) {
-                    setSourceChain(client);
-                    console.log("sourceChain changed to", newValue);
-                  }
-                });
+
+                const selectedClient = allClients.find(
+                  (client) => client.id === Number(newValue)
+                );
+                if (selectedClient) {
+                  setSourceChain(selectedClient as any);
+                  console.log("sourceChain changed to", newValue);
+                }
               }}
             >
               <option value={sepolia.id}>Sepolia</option>
@@ -310,12 +339,21 @@ export default function Home() {
               value={targetChain.id}
               onChange={(e) => {
                 const newValue = e.target.value;
-                clients.forEach((client) => {
-                  if (client.id === Number(newValue)) {
-                    setTargetChain(client);
-                    console.log("targetChain changed to", newValue);
-                  }
-                });
+                const allClients = [
+                  sepoliaClient,
+                  optimismSepoliaClient,
+                  abstractTestnetClient,
+                  zoraSepoliaClient,
+                  arbSepoliaClient,
+                ];
+
+                const selectedClient = allClients.find(
+                  (client) => client.id === Number(newValue)
+                );
+                if (selectedClient) {
+                  setTargetChain(selectedClient as any);
+                  console.log("targetChain changed to", newValue);
+                }
               }}
             >
               <option value={sepolia.id}>Sepolia</option>
