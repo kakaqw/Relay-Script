@@ -3,14 +3,22 @@ import {
   convertViemChainToRelayChain,
   MAINNET_RELAY_API,
   TESTNET_RELAY_API,
-  getClient,
 } from "@reservoir0x/relay-sdk";
 import {
-  arbitrumSepolia,
-  sepolia,
-  optimismSepolia,
-  abstractTestnet,
-  zoraSepolia,
+  arbitrum,
+  optimism,
+  abstract,
+  zora,
+  base,
+  blast,
+  ink,
+  linea,
+  manta,
+  mode,
+  scroll,
+  taiko,
+  unichain,
+  zksync,
 } from "viem/chains";
 
 // 保存客户端实例
@@ -26,14 +34,23 @@ export const relayClient = () => {
 
     // 创建新实例
     clientInstance = createClient({
-      baseApiUrl: TESTNET_RELAY_API,
+      baseApiUrl: MAINNET_RELAY_API,
       source: "Relay-SDK",
       chains: [
-        convertViemChainToRelayChain(sepolia),
-        convertViemChainToRelayChain(arbitrumSepolia),
-        convertViemChainToRelayChain(optimismSepolia),
-        convertViemChainToRelayChain(abstractTestnet),
-        convertViemChainToRelayChain(zoraSepolia),
+        convertViemChainToRelayChain(arbitrum),
+        convertViemChainToRelayChain(optimism),
+        convertViemChainToRelayChain(base),
+        convertViemChainToRelayChain(abstract),
+        convertViemChainToRelayChain(zora),
+        convertViemChainToRelayChain(blast),
+        convertViemChainToRelayChain(ink),
+        convertViemChainToRelayChain(linea),
+        convertViemChainToRelayChain(manta),
+        convertViemChainToRelayChain(mode),
+        convertViemChainToRelayChain(scroll),
+        convertViemChainToRelayChain(taiko),
+        convertViemChainToRelayChain(unichain),
+        convertViemChainToRelayChain(zksync),
       ],
     });
     console.log("初始化客户端成功", clientInstance);

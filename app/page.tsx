@@ -6,19 +6,31 @@ import { getPrivate } from "./tools/getPrivate";
 import { privateKeyToAccount } from "viem/accounts";
 import { formatEther } from "viem";
 import {
-  arbitrumSepolia,
-  sepolia,
-  optimismSepolia,
-  abstractTestnet,
-  zoraSepolia,
+  arbitrum,
+  optimism,
+  abstract,
+  zora,
+  base,
+  blast,
+  ink,
+  linea,
+  scroll,
+  unichain,
+  zksync,
 } from "viem/chains";
 
 import {
-  sepoliaClient,
-  optimismSepoliaClient,
-  abstractTestnetClient,
-  zoraSepoliaClient,
-  arbSepoliaClient,
+  optimismClient,
+  abstractClient,
+  zoraClient,
+  arbClient,
+  baseClient,
+  blastClient,
+  inkClient,
+  lineaClient,
+  scrollClient,
+  unichainClient,
+  zksyncClient,
 } from "./Clients";
 
 import { type Account } from "viem/accounts";
@@ -30,17 +42,23 @@ import { setKey } from "./tools/viem-client";
 export let accounts: Account[] = [];
 export let clients: any[] = [];
 const allClients = [
-  sepoliaClient,
-  optimismSepoliaClient,
-  abstractTestnetClient,
-  zoraSepoliaClient,
-  arbSepoliaClient,
+  optimismClient,
+  abstractClient,
+  zoraClient,
+  arbClient,
+  baseClient,
+  blastClient,
+  inkClient,
+  lineaClient,
+  scrollClient,
+  unichainClient,
+  zksyncClient,
 ];
 
 export default function Home() {
   const [Text, setText] = useState("");
-  const [sourceChain, setSourceChain] = useState(sepoliaClient);
-  const [targetChain, setTargetChain] = useState(arbSepoliaClient);
+  const [sourceChain, setSourceChain] = useState(arbClient);
+  const [targetChain, setTargetChain] = useState(optimismClient);
   const [rpcKey, setRpcKey] = useState(""); // 保存RPC API Key
   const [showMainUI, setShowMainUI] = useState(false); // 控制是否显示主界面
 
@@ -52,6 +70,7 @@ export default function Home() {
   // 设置随机路径
   const setPath = async () => {
     const randomNum = Math.floor(Math.random() * 7) + 6;
+
     //随机创建一个固定长度的数组
     path = new Array(randomNum);
     //设置启始链和中止链
@@ -60,38 +79,34 @@ export default function Home() {
 
     // 所有可用的客户端
     const allClients = [
-      sepoliaClient,
-      optimismSepoliaClient,
-      abstractTestnetClient,
-      zoraSepoliaClient,
-      arbSepoliaClient,
+      optimismClient,
+      abstractClient,
+      zoraClient,
+      arbClient,
+      baseClient,
+      blastClient,
+      inkClient,
+      lineaClient,
+      scrollClient,
+      unichainClient,
+      zksyncClient,
     ];
 
-    // 确保路径长度足够容纳所有客户端
-    if (randomNum < allClients.length + 1) {
-      console.warn("路径长度不足以包含所有客户端，增加长度");
-      const newLength = allClients.length + 1;
-      path = new Array(newLength);
-      path[0] = sourceChain;
-      path[newLength - 1] = targetChain;
-    }
-
-    // 创建一个映射，记录哪些客户端已经被使用
-    const usedClients = new Set();
-    usedClients.add(sourceChain);
-    usedClients.add(targetChain);
-
-    // 第一步：填充中间位置，确保使用所有客户端
+    // 填充中间位置，确保中间元素相互不同
     for (let i = 1; i < path.length - 1; i++) {
-      // 首先查找未使用的客户端
+      // 选择与前一个客户端不同，且与中间已选择客户端不同的随机客户端
       let validClients = allClients.filter(
         (client) =>
-          !usedClients.has(client) && // 未使用过
           client !== path[i - 1] && // 不同于前一个
           (i === path.length - 2 ? client !== path[path.length - 1] : true) // 如果是倒数第二个位置，确保不同于终点
       );
 
-      // 如果已经用完所有客户端，则选择任意一个不同于前后的客户端
+      // 排除已在中间位置使用过的客户端（不包括首尾）
+      for (let j = 1; j < i; j++) {
+        validClients = validClients.filter((client) => client !== path[j]);
+      }
+
+      // 如果没有有效的客户端选择（可能是因为路径太长），则放宽条件，只确保与相邻元素不同
       if (validClients.length === 0) {
         validClients = allClients.filter(
           (client) =>
@@ -103,79 +118,34 @@ export default function Home() {
       // 随机选择一个客户端
       const randomIndex = Math.floor(Math.random() * validClients.length);
       path[i] = validClients[randomIndex];
-
-      // 标记为已使用
-      usedClients.add(path[i]);
     }
 
-    // 第二步：检查是否有未使用的客户端
-    const missingClients = allClients.filter(
-      (client) => !usedClients.has(client)
-    );
+    // 最后检查一遍确保所有相邻客户端不同（检查中间部分）
+    for (let i = 1; i < path.length - 1; i++) {
+      if (path[i] === path[i - 1] || path[i] === path[i + 1]) {
+        console.warn(`发现相邻相同客户端在位置 ${i}，尝试修复`);
 
-    // 如果有未使用的客户端，尝试将它们放入路径中
-    if (missingClients.length > 0) {
-      console.log("有未使用的客户端:", missingClients.length, "个");
-
-      // 对于每个未使用的客户端
-      for (const missingClient of missingClients) {
-        // 找到可以替换的位置
-        let replaced = false;
-
-        for (let i = 1; i < path.length - 1; i++) {
-          // 检查是否可以在此位置替换
-          if (
-            missingClient !== path[i - 1] && // 不同于前一个
-            (i === path.length - 2
-              ? missingClient !== path[path.length - 1]
-              : missingClient !== path[i + 1]) // 不同于后一个
-          ) {
-            // 检查被替换的客户端在路径中是否出现多次
-            const clientToReplace = path[i];
-            const occurrences = path.filter(
-              (c) => c === clientToReplace
-            ).length;
-
-            // 只替换出现多次的客户端
-            if (occurrences > 1) {
-              path[i] = missingClient;
-              replaced = true;
-              break;
-            }
-          }
-        }
-
-        // 如果没有找到合适的替换位置，尝试添加到路径中
-        if (!replaced) {
-          console.warn("无法替换客户端:", missingClient, "，尝试其他方法");
-
-          // 最后的尝试：在路径中找一个位置，忽略多次出现的限制
-          for (let i = 1; i < path.length - 1; i++) {
-            if (
-              missingClient !== path[i - 1] && // 不同于前一个
-              (i === path.length - 2
-                ? missingClient !== path[path.length - 1]
-                : missingClient !== path[i + 1]) // 不同于后一个
-            ) {
-              path[i] = missingClient;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    // 最后一步：确保所有相邻客户端不同
-    for (let i = 1; i < path.length; i++) {
-      if (path[i] === path[i - 1]) {
-        console.warn("发现相邻相同客户端，尝试修复");
-
-        // 找到一个不同于前后的客户端
-        const validReplacement = allClients.filter(
-          (client) =>
-            client !== path[i - 1] &&
-            (i === path.length - 1 ? true : client !== path[i + 1])
+        // 查找可用的替换客户端：不同于前后相邻客户端，且不在中间位置使用过
+        let validReplacement = allClients.filter(
+          (client) => client !== path[i - 1] && client !== path[i + 1]
         );
+
+        // 排除已在中间位置使用过的客户端
+        for (let j = 1; j < path.length - 1; j++) {
+          if (j !== i) {
+            // 不排除当前位置
+            validReplacement = validReplacement.filter(
+              (client) => client !== path[j]
+            );
+          }
+        }
+
+        // 如果没有有效的替换选项，则放宽条件，只确保与相邻元素不同
+        if (validReplacement.length === 0) {
+          validReplacement = allClients.filter(
+            (client) => client !== path[i - 1] && client !== path[i + 1]
+          );
+        }
 
         if (validReplacement.length > 0) {
           const randomIndex = Math.floor(
@@ -186,14 +156,10 @@ export default function Home() {
       }
     }
 
-    console.log("最终生成的路径:", path);
-    console.log("起始客户端:", sourceChain);
-    console.log("终止客户端:", targetChain);
-
     // 设置clients数组，用于执行跨链交易
     clients = [...path];
 
-    console.log(clients);
+    console.log("交易路径", clients);
   };
 
   //获取报价
@@ -213,6 +179,7 @@ export default function Home() {
       let finish: any = [];
       for (const account of accounts) {
         setPath();
+        let lossTotal = 0;
         for (const [index, { publicClient, client, id }] of clients.entries()) {
           const balance = await publicClient.getBalance({
             address: account.address,
@@ -220,7 +187,7 @@ export default function Home() {
           console.log("balance", formatEther(balance));
 
           if (clients[index + 1] == null) {
-            console.log("没有下一个客户端");
+            console.log("地址完成了一轮交互");
             continue;
           }
 
@@ -235,12 +202,19 @@ export default function Home() {
             toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
             tradeType: "EXACT_INPUT",
           };
-          const toChainId = await executeTx(tx);
+          const loss = await executeTx(tx);
+          lossTotal += Number(loss);
 
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          console.log("toChainId", toChainId);
+          //随机3～15分钟延
+          const randomDelay = Math.floor(Math.random() * 1000 * 60 * 10) + 3000;
+          console.log("延迟", randomDelay / 1000 / 60, "分钟");
+
+          await new Promise((resolve) => setTimeout(resolve, randomDelay));
+          console.log("此次磨损", loss, "eth");
         }
+
         console.log("完成交互", account.address);
+        console.log("总磨损", lossTotal, "eth");
         finish.push(account.address);
       }
       console.log("完成交互", finish);
@@ -254,9 +228,6 @@ export default function Home() {
     setRpcKey(apiKey);
     setShowMainUI(true); // 提交后显示主界面
     console.log("已设置RPC API Key:", apiKey);
-
-    // 这里可以添加使用API Key更新客户端的逻辑
-    // 例如: updateClientsWithApiKey(apiKey);
   };
 
   // 如果没有设置RPC Key，显示RPC输入组件
@@ -325,11 +296,17 @@ export default function Home() {
                 }
               }}
             >
-              <option value={sepolia.id}>Sepolia</option>
-              <option value={arbitrumSepolia.id}>Arbitrum Sepolia</option>
-              <option value={abstractTestnet.id}>abstractTestnet</option>
-              <option value={zoraSepolia.id}>Zora Sepolia</option>
-              <option value={optimismSepolia.id}>Optimism Sepolia</option>
+              <option value={arbitrum.id}>Arbitrum</option>
+              <option value={optimism.id}>Optimism</option>
+              <option value={base.id}>Base</option>
+              <option value={abstract.id}>abstract</option>
+              <option value={zora.id}>Zora</option>
+              <option value={blast.id}>Blast</option>
+              <option value={ink.id}>Ink</option>
+              <option value={linea.id}>Linea</option>
+              <option value={scroll.id}>Scroll</option>
+              <option value={unichain.id}>Unichain</option>
+              <option value={zksync.id}>Zksync</option>
             </select>
           </div>
           <div className="w-full max-w-xs">
@@ -339,13 +316,6 @@ export default function Home() {
               value={targetChain.id}
               onChange={(e) => {
                 const newValue = e.target.value;
-                const allClients = [
-                  sepoliaClient,
-                  optimismSepoliaClient,
-                  abstractTestnetClient,
-                  zoraSepoliaClient,
-                  arbSepoliaClient,
-                ];
 
                 const selectedClient = allClients.find(
                   (client) => client.id === Number(newValue)
@@ -356,11 +326,17 @@ export default function Home() {
                 }
               }}
             >
-              <option value={sepolia.id}>Sepolia</option>
-              <option value={arbitrumSepolia.id}>Arbitrum Sepolia</option>
-              <option value={abstractTestnet.id}>abstractTestnet</option>
-              <option value={zoraSepolia.id}>Zora Sepolia</option>
-              <option value={optimismSepolia.id}>Optimism Sepolia</option>
+              <option value={arbitrum.id}>Arbitrum</option>
+              <option value={optimism.id}>Optimism</option>
+              <option value={base.id}>Base</option>
+              <option value={abstract.id}>abstract</option>
+              <option value={zora.id}>Zora</option>
+              <option value={blast.id}>Blast</option>
+              <option value={ink.id}>Ink</option>
+              <option value={linea.id}>Linea</option>
+              <option value={scroll.id}>Scroll</option>
+              <option value={unichain.id}>Unichain</option>
+              <option value={zksync.id}>Zksync</option>
             </select>
           </div>
         </div>
