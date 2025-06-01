@@ -69,7 +69,7 @@ export default function Home() {
 
   // 设置随机路径
   const setPath = async () => {
-    const randomNum = Math.floor(Math.random() * 7) + 6;
+    const randomNum = Math.floor(Math.random() * 5) + 3;
 
     //随机创建一个固定长度的数组
     path = new Array(randomNum);
@@ -91,71 +91,71 @@ export default function Home() {
       unichainClient,
       zksyncClient,
     ];
-
-    // 填充中间位置，确保中间元素相互不同
-    for (let i = 1; i < path.length - 1; i++) {
-      // 选择与前一个客户端不同，且与中间已选择客户端不同的随机客户端
-      let validClients = allClients.filter(
-        (client) =>
-          client !== path[i - 1] && // 不同于前一个
-          (i === path.length - 2 ? client !== path[path.length - 1] : true) // 如果是倒数第二个位置，确保不同于终点
-      );
-
-      // 排除已在中间位置使用过的客户端（不包括首尾）
-      for (let j = 1; j < i; j++) {
-        validClients = validClients.filter((client) => client !== path[j]);
-      }
-
-      // 如果没有有效的客户端选择（可能是因为路径太长），则放宽条件，只确保与相邻元素不同
-      if (validClients.length === 0) {
-        validClients = allClients.filter(
+    if (randomNum > 2) {
+      // 填充中间位置，确保中间元素相互不同
+      for (let i = 1; i < path.length - 1; i++) {
+        // 选择与前一个客户端不同，且与中间已选择客户端不同的随机客户端
+        let validClients = allClients.filter(
           (client) =>
             client !== path[i - 1] && // 不同于前一个
             (i === path.length - 2 ? client !== path[path.length - 1] : true) // 如果是倒数第二个位置，确保不同于终点
         );
-      }
 
-      // 随机选择一个客户端
-      const randomIndex = Math.floor(Math.random() * validClients.length);
-      path[i] = validClients[randomIndex];
-    }
-
-    // 最后检查一遍确保所有相邻客户端不同（检查中间部分）
-    for (let i = 1; i < path.length - 1; i++) {
-      if (path[i] === path[i - 1] || path[i] === path[i + 1]) {
-        console.warn(`发现相邻相同客户端在位置 ${i}，尝试修复`);
-
-        // 查找可用的替换客户端：不同于前后相邻客户端，且不在中间位置使用过
-        let validReplacement = allClients.filter(
-          (client) => client !== path[i - 1] && client !== path[i + 1]
-        );
-
-        // 排除已在中间位置使用过的客户端
-        for (let j = 1; j < path.length - 1; j++) {
-          if (j !== i) {
-            // 不排除当前位置
-            validReplacement = validReplacement.filter(
-              (client) => client !== path[j]
-            );
-          }
+        // 排除已在中间位置使用过的客户端（不包括首尾）
+        for (let j = 1; j < i; j++) {
+          validClients = validClients.filter((client) => client !== path[j]);
         }
 
-        // 如果没有有效的替换选项，则放宽条件，只确保与相邻元素不同
-        if (validReplacement.length === 0) {
-          validReplacement = allClients.filter(
+        // 如果没有有效的客户端选择（可能是因为路径太长），则放宽条件，只确保与相邻元素不同
+        if (validClients.length === 0) {
+          validClients = allClients.filter(
+            (client) =>
+              client !== path[i - 1] && // 不同于前一个
+              (i === path.length - 2 ? client !== path[path.length - 1] : true) // 如果是倒数第二个位置，确保不同于终点
+          );
+        }
+
+        // 随机选择一个客户端
+        const randomIndex = Math.floor(Math.random() * validClients.length);
+        path[i] = validClients[randomIndex];
+      }
+
+      // 最后检查一遍确保所有相邻客户端不同（检查中间部分）
+      for (let i = 1; i < path.length - 1; i++) {
+        if (path[i] === path[i - 1] || path[i] === path[i + 1]) {
+          console.warn(`发现相邻相同客户端在位置 ${i}，尝试修复`);
+
+          // 查找可用的替换客户端：不同于前后相邻客户端，且不在中间位置使用过
+          let validReplacement = allClients.filter(
             (client) => client !== path[i - 1] && client !== path[i + 1]
           );
-        }
 
-        if (validReplacement.length > 0) {
-          const randomIndex = Math.floor(
-            Math.random() * validReplacement.length
-          );
-          path[i] = validReplacement[randomIndex];
+          // 排除已在中间位置使用过的客户端
+          for (let j = 1; j < path.length - 1; j++) {
+            if (j !== i) {
+              // 不排除当前位置
+              validReplacement = validReplacement.filter(
+                (client) => client !== path[j]
+              );
+            }
+          }
+
+          // 如果没有有效的替换选项，则放宽条件，只确保与相邻元素不同
+          if (validReplacement.length === 0) {
+            validReplacement = allClients.filter(
+              (client) => client !== path[i - 1] && client !== path[i + 1]
+            );
+          }
+
+          if (validReplacement.length > 0) {
+            const randomIndex = Math.floor(
+              Math.random() * validReplacement.length
+            );
+            path[i] = validReplacement[randomIndex];
+          }
         }
       }
     }
-
     // 设置clients数组，用于执行跨链交易
     clients = [...path];
 
