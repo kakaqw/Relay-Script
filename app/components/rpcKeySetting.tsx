@@ -75,7 +75,7 @@ export default function RpcInput({ onRpcSubmit }: RpcInputProps) {
               <Input
                 value={rpcKey}
                 onChange={(e) => setRpcKey(e.target.value)}
-                placeholder="输入您的Alchemy或Infura API Key"
+                placeholder="输入Alchemy API Key"
                 className="w-full"
               />
             </div>

@@ -69,7 +69,7 @@ export default function Home() {
 
   // 设置随机路径
   const setPath = async () => {
-    const randomNum = Math.floor(Math.random() * 5) + 3;
+    const randomNum = Math.floor(Math.random() * 4) + 3;
 
     //随机创建一个固定长度的数组
     path = new Array(randomNum);
@@ -239,13 +239,18 @@ export default function Home() {
     <div className="min-h-screen bg-background p-6 w-100vw ">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold text-center mb-8">Auto Relay</h1>
-
+        <h4 className="text-sm font-bold text-center mb-8">
+          需要查看交易日志的按F12，在控制台查看
+        </h4>
+        <h4 className="text-sm font-bold text-center mb-8">
+          启始链和终止链可以相同
+        </h4>
         <div className="flex justify-center items-center">
           {/* 输入框 */}
           <div className="space-y-2">
             <Textarea
               id="left-textarea"
-              placeholder="请在此输入私钥..."
+              placeholder="请在此输入私钥，每输入一个私钥要进行换行..."
               value={Text}
               onChange={(e) => {
                 setText(e.target.value);
@@ -261,14 +266,6 @@ export default function Home() {
 
         {/* 操作按钮 */}
         <div className="flex justify-center gap-4 mt-8">
-          <button
-            onClick={() => {
-              setPath();
-            }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            获取ETH价格
-          </button>
           <button
             onClick={() => {
               getQuote();

@@ -1,5 +1,6 @@
 import { relayClient } from "./relay-client";
 import { Quote } from "./interface";
+import { parseEther } from "viem";
 // import { getEthPrice } from "../getEthPrice";
 
 export const executeTx = async ({
@@ -12,6 +13,13 @@ export const executeTx = async ({
   toCurrency,
   tradeType,
 }: Quote) => {
+  // 随机保留0.0012-0.0016
+  const reserveMin = parseEther("0.0012");
+  const reserveMax = parseEther("0.0016");
+  const randomReserve =
+    reserveMin +
+    BigInt(Math.floor(Math.random() * Number(reserveMax - reserveMin)));
+
   //获取报价
   const a: any = await relayClient()?.actions.getQuote(
     {
@@ -43,19 +51,37 @@ export const executeTx = async ({
     return toChainId;
   }
 
-  const b: any = await relayClient()?.actions.getQuote(
-    {
-      user: user, //用户地址
-      wallet: wallet, //客户端
-      chainId: chainId, //源链id
-      toChainId: toChainId, //目标链id
-      amount: availableAmount.toString(), //跨链数量
-      currency: currency, //跨链token
-      toCurrency: toCurrency, //目标token
-      tradeType: tradeType, //交易类型
-    },
-    true
-  );
+  let b: any;
+  if (chainId === 42161 || chainId === 10 || chainId == 8453) {
+    b = await relayClient()?.actions.getQuote(
+      {
+        user: user, //用户地址
+        wallet: wallet, //客户端
+        chainId: chainId, //源链id
+        toChainId: toChainId, //目标链id
+        amount: (availableAmount - randomReserve).toString(), //跨链数量
+        currency: currency, //跨链token
+        toCurrency: toCurrency, //目标token
+        tradeType: tradeType, //交易类型
+      },
+      true
+    );
+    console.log("留存", randomReserve);
+  } else {
+    b = await relayClient()?.actions.getQuote(
+      {
+        user: user, //用户地址
+        wallet: wallet, //客户端
+        chainId: chainId, //源链id
+        toChainId: toChainId, //目标链id
+        amount: availableAmount.toString(), //跨链数量
+        currency: currency, //跨链token
+        toCurrency: toCurrency, //目标token
+        tradeType: tradeType, //交易类型
+      },
+      true
+    );
+  }
 
   console.log("quote", a);
   //获取eth价格
