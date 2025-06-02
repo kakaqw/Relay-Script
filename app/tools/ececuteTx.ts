@@ -1,6 +1,6 @@
 import { relayClient } from "./relay-client";
 import { Quote } from "./interface";
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
 // import { getEthPrice } from "../getEthPrice";
 
 export const executeTx = async ({
@@ -14,11 +14,14 @@ export const executeTx = async ({
   tradeType,
 }: Quote) => {
   // 随机保留0.0012-0.0016
-  const reserveMin = parseEther("0.0012");
+  const reserveMin = parseEther("0.0011");
   const reserveMax = parseEther("0.0016");
   const randomReserve =
     reserveMin +
     BigInt(Math.floor(Math.random() * Number(reserveMax - reserveMin)));
+
+  // 确保amount是字符串格式
+  const amountStr = BigInt(amount).toString();
 
   //获取报价
   const a: any = await relayClient()?.actions.getQuote(
@@ -27,7 +30,7 @@ export const executeTx = async ({
       wallet: wallet, //客户端
       chainId: chainId, //源链id
       toChainId: toChainId, //目标链id
-      amount: amount, //跨链数量
+      amount: amountStr, //跨链数量
       currency: currency, //跨链token
       toCurrency: toCurrency, //目标token
       tradeType: tradeType, //交易类型
@@ -35,12 +38,19 @@ export const executeTx = async ({
     true
   );
 
+  console.log("第一份报价用于查询gas", a);
+  if (!a) {
+    console.error("获取quote失败");
+    return 0;
+  }
+
   // console.log("quote", a);
   // console.log("gas费用", formatEther(a.fees.gas.amount));
 
   const gasAmount = BigInt(a.fees.gas.amount);
-  const safetyBuffer = gasAmount * BigInt(2);
+  const safetyBuffer = gasAmount * BigInt(10);
   const availableAmount = BigInt(amount) - safetyBuffer;
+  console.log("跨链金额", formatEther(availableAmount));
 
   // console.log("总余额:", formatEther(BigInt(amount)));
   // console.log("预留gas费用(包含10%安全裕量):", formatEther(safetyBuffer));
@@ -53,28 +63,31 @@ export const executeTx = async ({
 
   let b: any;
   if (chainId === 42161 || chainId === 10 || chainId == 8453) {
+    const amountStr = BigInt(availableAmount - randomReserve).toString();
+
     b = await relayClient()?.actions.getQuote(
       {
         user: user, //用户地址
         wallet: wallet, //客户端
         chainId: chainId, //源链id
         toChainId: toChainId, //目标链id
-        amount: (availableAmount - randomReserve).toString(), //跨链数量
+        amount: amountStr, //跨链数量
         currency: currency, //跨链token
         toCurrency: toCurrency, //目标token
         tradeType: tradeType, //交易类型
       },
       true
     );
-    console.log("留存", randomReserve);
+    console.log("留存", formatEther(randomReserve));
   } else {
+    console.log("查询非留存链b报价");
     b = await relayClient()?.actions.getQuote(
       {
         user: user, //用户地址
         wallet: wallet, //客户端
         chainId: chainId, //源链id
         toChainId: toChainId, //目标链id
-        amount: availableAmount.toString(), //跨链数量
+        amount: BigInt(availableAmount).toString(), //跨链数量
         currency: currency, //跨链token
         toCurrency: toCurrency, //目标token
         tradeType: tradeType, //交易类型
@@ -83,7 +96,7 @@ export const executeTx = async ({
     );
   }
 
-  console.log("quote", a);
+  console.log("第二份报价用于执行交易", a);
   //获取eth价格
   // const price = await getEthPrice();
 

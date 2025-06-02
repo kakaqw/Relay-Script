@@ -197,7 +197,7 @@ export default function Home() {
             wallet: client(account),
             chainId: id,
             toChainId: clients[index + 1].id,
-            amount: balance.toString(),
+            amount: BigInt(balance).toString(),
             currency: "0x0000000000000000000000000000000000000000", // ERC20 Address
             toCurrency: "0x0000000000000000000000000000000000000000", // ERC20 Address
             tradeType: "EXACT_INPUT",
@@ -205,12 +205,13 @@ export default function Home() {
           const loss = await executeTx(tx);
           lossTotal += Number(loss);
 
-          //随机3～15分钟延
-          const randomDelay = Math.floor(Math.random() * 1000 * 60 * 10) + 3000;
-          console.log("延迟", randomDelay / 1000 / 60, "分钟");
-
-          await new Promise((resolve) => setTimeout(resolve, randomDelay));
           console.log("此次磨损", loss, "eth");
+
+          //随机3～15分钟延
+          const randomDelay =
+            Math.floor(Math.random() * 1000 * 60 * 15) + 300000;
+          console.log("延迟", randomDelay / 1000 / 60, "分钟");
+          await new Promise((resolve) => setTimeout(resolve, randomDelay));
         }
 
         console.log("完成交互", account.address);
