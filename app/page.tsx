@@ -175,7 +175,7 @@ export default function Home() {
 
         accounts.push(account);
       });
-
+      console.log("账户合集", accounts);
       let finish: any = [];
       for (const account of accounts) {
         setPath();
@@ -209,7 +209,7 @@ export default function Home() {
 
           //随机3～15分钟延
           const randomDelay =
-            Math.floor(Math.random() * 1000 * 60 * 15) + 300000;
+            Math.floor(Math.random() * 1000 * 60 * 10) + 300000;
           console.log("延迟", randomDelay / 1000 / 60, "分钟");
           await new Promise((resolve) => setTimeout(resolve, randomDelay));
         }
